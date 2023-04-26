@@ -19,6 +19,18 @@ import MyMat from "@/lib/spline/myMat";
 // input
 import SplineFormContext from "../context/SplineFormContext";
 
+// initial points
+var p0, p1, p2, p3, p4;
+var points;
+var lines;
+p0 = [1, -1, 0];
+p1 = [2, 0.5, 0];
+p2 = [0, 1.5, 0];
+p3 = [-1, 0, 0];
+p4 = [-2, 1, 0];
+points = [p0, p1, p2, p3, p4];
+lines = [points];
+
 const SplineApp = () => {
     applyCanvasExtensions();
     const { formValues } = useContext(SplineFormContext);
@@ -28,9 +40,6 @@ const SplineApp = () => {
     var legacygl;
     var drawutil;
     var camera;
-    var p0, p1, p2, p3, p4;
-    var points;
-    var lines;
     var selected = null;
     var target = null;
     var num_steps;
@@ -191,7 +200,7 @@ const SplineApp = () => {
             for (let i = 0; i <= num_steps; ++i) {
                 let t = i / num_steps;
                 //samples[i] = evalGeneralBezier([[1,0,0],[1,0.55228,0],[0.55228,1,0],[0,1,0]], t);
-                samples[i] = evalGeneralBezier(points, t);
+                samples[i] = evalGeneralBezier(lines[0], t);
             }
             sample_draw([1, 0.2, 0.2], samples);
         }
@@ -205,16 +214,16 @@ const SplineApp = () => {
 
     
         // adjusted sampling
-        const adjust_samples = bezierAdjustSampling(points.slice(0,4), 0, 1, p0, p3);
+        const adjust_samples = bezierAdjustSampling(lines[0].slice(0,4), 0, 1, p0, p3);
         if (formValues.adjustSample) {
-            sample_draw([0,0,0], points[0].concat(adjust_samples).concat([points[3]]));
+            sample_draw([0,0,0], lines[0][0].concat(adjust_samples).concat([lines[0][3]]));
         }
         
         // rational Bezier curve
         if (formValues.rational) {
             for (let i = 0; i <= num_steps; ++i) {
                 let t = i / num_steps;
-                samples[i] = rationalBezier(points.slice(0,3), t, [1,2,1]);
+                samples[i] = rationalBezier(lines[0].slice(0,3), t, [1,2,1]);
             }
             sample_draw([1, 0.2, 0.2], samples);
         }
@@ -223,20 +232,20 @@ const SplineApp = () => {
         if (formValues.quadratic) {
             for (let i = 0; i <= num_steps; ++i) {
                 let t = i / num_steps;
-                samples[i] = evalQuadraticBezier(points.slice(0,3), t);
+                samples[i] = evalQuadraticBezier(lines[0].slice(0,3), t);
             }
             sample_draw([0.6, 1, 0.2], samples);
         }
         
         // Cutmull Rom Spline
         if (formValues.splineUniform) {
-            sample_draw([0.2, 0.2, 1], cutmullRomSpline(points, "uniform", num_steps));
+            sample_draw([0.2, 0.2, 1], cutmullRomSpline(lines[0], "uniform", num_steps));
         }
         if (formValues.splineChordal) {
-            sample_draw([0.6, 0.2, 1], cutmullRomSpline(points, "chordal", num_steps));
+            sample_draw([0.6, 0.2, 1], cutmullRomSpline(lines[0], "chordal", num_steps));
         }
         if (formValues.splineCentripetal) {
-            sample_draw([1, 0.2, 1], cutmullRomSpline(points, "centripetal", num_steps));
+            sample_draw([1, 0.2, 1], cutmullRomSpline(lines[0], "centripetal", num_steps));
         }
         
         // b-spline
@@ -249,7 +258,7 @@ const SplineApp = () => {
             //sample_draw([0.6, 0.2, 1], Circular.circular([p2,p3,p4], num_steps));
         //}
         
-        //sample_draw([0.6,0.2,1],yukselCurve(points,num_steps));
+        //sample_draw([0.6,0.2,1],yukselCurve(lines[0],num_steps));
         //sample_draw([0,0,0],yuksel([p0,p1,p2,p3,p4,p0],num_steps));
         
         // draw control points
@@ -297,13 +306,6 @@ const SplineApp = () => {
         drawutil = get_drawutil(gl, legacygl);
         camera = get_camera(canvas.width);
         camera.eye = [0, 0, 7];
-        p0 = [1, -1, 0];
-        p1 = [2, 0.5, 0];
-        p2 = [0, 1.5, 0];
-        p3 = [-1, 0, 0];
-        p4 = [-2, 1, 0]
-        points = [p0, p1, p2, p3, p4];
-        lines = [points];
     
         // event handlers
         canvas.onmousedown = onMouseDown;
