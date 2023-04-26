@@ -27,11 +27,6 @@ export default function Home() {
           </Link>
         </div>
         <SplineForm/>
-        <input
-          type="text"
-          placeholder="お名前"
-          className="input-field"
-        />
       </div>
     </div>
   );
