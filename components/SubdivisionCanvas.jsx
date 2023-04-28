@@ -1,5 +1,5 @@
 // react
-import { useEffect, useRef } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 
 // legacygl
 import { mat2,mat2d,mat3,mat4,quat,quat2,vec2,vec3,vec4 } from "@/lib/legacygl/gl-matrix-util";
@@ -11,7 +11,12 @@ import { make_halfedge_mesh } from "@/lib/legacygl/halfedge";
 import { meshio } from "@/lib/legacygl/meshio";
 import { make_boundingbox } from "@/lib/legacygl/boundingbox";
 
+const buttonStyle = "bg-yellow-500 hover:bg-yellow-700 text-white font-bold py-1 px-4 rounded";
+const inputFileStyle = "bg-yellow-500 hover:bg-yellow-700 text-white font-bold py-1 px-4 h-8 w-full text-center rounded cursor-pointer inline-block"
+
 const SubdivisionApp = () => {
+    const [fileName, setFileName] = useState({});
+
     applyCanvasExtensions();
     const canvasRef = useRef(null);
 
@@ -170,6 +175,73 @@ const SubdivisionApp = () => {
         a.click();
     }
 
+    function read_mesh(filename, content) {
+        var mesh_temp = meshio.read(filename, content);
+        var has_nontriangle = false;
+        for (var i = 0; i < mesh_temp.faces.length; ++i) {
+            if (mesh_temp.faces[i].halfedges().length != 3) {
+                has_nontriangle = true;
+                break;
+            }
+        }
+        if (has_nontriangle) {
+            alert("Non-triangle polygon found! Please triangulate the mesh first.");
+            return;
+        }
+        mesh_control = mesh_subdiv = mesh_temp;
+        mesh_subdiv.compute_normals();
+        bbox = make_boundingbox();
+        mesh_control.vertices.forEach(function(v) {
+            bbox.extend(v.point);
+        });
+        camera.center = bbox.center();
+        camera.eye = vec3.add([], camera.center, [0, 0, bbox.diagonal_norm() * 2]);
+        camera.up = [0, 1, 0];
+        displist_control.invalidate();
+        displist_subdiv_faces.invalidate();
+        displist_subdiv_edges.invalidate();
+        draw();
+        document.getElementById("label_mesh_nv").innerHTML = mesh_subdiv.num_vertices();
+        document.getElementById("label_mesh_nf").innerHTML = mesh_subdiv.num_faces();
+        document.getElementById("label_mesh_ne").innerHTML = mesh_subdiv.num_edges();
+    };
+
+    function read_default_mesh(url) {
+        var xhr = new XMLHttpRequest();
+        xhr.open("GET", url, true);
+        xhr.onload = function() {
+            if (this.status == 200)
+                read_mesh(url, this.response);
+        };
+        xhr.send();
+    };
+
+    function read_texture(dataurl) {
+        var img = document.getElementById("img_material");
+        img.onload = function() {
+            gl.bindTexture(gl.TEXTURE_2D, texture);
+            gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGBA, gl.RGBA, gl.UNSIGNED_BYTE, this);
+            gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MAG_FILTER, gl.LINEAR);
+            gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, gl.LINEAR);
+            displist_subdiv_faces.invalidate();
+            draw();
+        };
+        img.crossOrigin = "anonymous";
+        img.src = dataurl;
+    };
+
+    function read_default_texture(url) {
+        if (!verify_filename_extension(url, [".png", ".jpg", ".gif"])) return;
+        var xhr = new XMLHttpRequest();
+        xhr.open("GET", url, true);
+        xhr.responseType = "blob";
+        xhr.onload = function() {
+            if (this.status == 200)
+                read_texture(URL.createObjectURL(this.response));
+        };
+        xhr.send();
+    };
+
     function init() {
         // OpenGL context
         canvas = document.getElementById("canvas");
@@ -249,91 +321,7 @@ const SubdivisionApp = () => {
             if (camera.is_moving())
                 camera.finish_moving();
         };
-        function read_mesh(filename, content) {
-            var mesh_temp = meshio.read(filename, content);
-            var has_nontriangle = false;
-            for (var i = 0; i < mesh_temp.faces.length; ++i) {
-                if (mesh_temp.faces[i].halfedges().length != 3) {
-                    has_nontriangle = true;
-                    break;
-                }
-            }
-            if (has_nontriangle) {
-                alert("Non-triangle polygon found! Please triangulate the mesh first.");
-                return;
-            }
-            mesh_control = mesh_subdiv = mesh_temp;
-            mesh_subdiv.compute_normals();
-            bbox = make_boundingbox();
-            mesh_control.vertices.forEach(function(v) {
-                bbox.extend(v.point);
-            });
-            camera.center = bbox.center();
-            camera.eye = vec3.add([], camera.center, [0, 0, bbox.diagonal_norm() * 2]);
-            camera.up = [0, 1, 0];
-            displist_control.invalidate();
-            displist_subdiv_faces.invalidate();
-            displist_subdiv_edges.invalidate();
-            draw();
-            document.getElementById("label_mesh_nv").innerHTML = mesh_subdiv.num_vertices();
-            document.getElementById("label_mesh_nf").innerHTML = mesh_subdiv.num_faces();
-            document.getElementById("label_mesh_ne").innerHTML = mesh_subdiv.num_edges();
-        };
-        document.getElementById("text_mesh_disk").onchange = function() {
-            if (this.files.length != 1) return;
-            var file = this.files[0];
-            if (!verify_filename_extension(file.name, [".obj", ".off"])) return;
-            var reader = new FileReader();
-            reader.onload = function() {
-                read_mesh(file.name, this.result);
-            };
-            reader.readAsText(file);
-        };
-        function read_default_mesh(url) {
-            var xhr = new XMLHttpRequest();
-            xhr.open("GET", url, true);
-            xhr.onload = function() {
-                if (this.status == 200)
-                    read_mesh(url, this.response);
-            };
-            xhr.send();
-        };
         read_default_mesh("https://cdn.glitch.com/e530aeed-ec07-4e9a-b2b2-e5dd9fc39322%2Floop-test.obj?1556153350921");
-        // texture
-        function read_texture(dataurl) {
-            var img = document.getElementById("img_material");
-            img.onload = function() {
-                gl.bindTexture(gl.TEXTURE_2D, texture);
-                gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGBA, gl.RGBA, gl.UNSIGNED_BYTE, this);
-                gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MAG_FILTER, gl.LINEAR);
-                gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, gl.LINEAR);
-                displist_subdiv_faces.invalidate();
-                draw();
-            };
-            img.crossOrigin = "anonymous";
-            img.src = dataurl;
-        };
-        document.getElementById("text_material_disk").onchange = function() {
-            if (this.files.length != 1) return;
-            var file = this.files[0];
-            if (!verify_filename_extension(file.name, [".png", ".jpg", ".gif"])) return;
-            var reader = new FileReader();
-            reader.onload = function() {
-                read_texture(this.result);
-            };
-            reader.readAsDataURL(file);
-        };
-        function read_default_texture(url) {
-            if (!verify_filename_extension(url, [".png", ".jpg", ".gif"])) return;
-            var xhr = new XMLHttpRequest();
-            xhr.open("GET", url, true);
-            xhr.responseType = "blob";
-            xhr.onload = function() {
-                if (this.status == 200)
-                    read_texture(URL.createObjectURL(this.response));
-            };
-            xhr.send();
-        };
         read_default_texture("https://cdn.glitch.com/13696316-44e5-40d1-b312-830e260e4817%2Fmetal1.png?1555562471905");
     };
 
@@ -343,6 +331,17 @@ const SubdivisionApp = () => {
             draw();
         }
     }, [canvasRef]);
+
+    const handleFileChange = (e) => {
+        if (e.target.files.length !== 1) return;
+        const file = e.target.files[0];
+        if (!verify_filename_extension(file.name, [".obj", ".off"])) return;
+        const reader = new FileReader();
+        reader.onload = function () {
+            read_mesh(file.name, reader.result);
+        };
+        reader.readAsText(file);
+    };
 
     const handleSubdivideClick = () => {
         subdivide();
@@ -357,44 +356,116 @@ const SubdivisionApp = () => {
         draw();
     };
 
-    return (
-        <table>
-            <tbody>
-                <tr>
-                    <td>
-                        <canvas ref={canvasRef} id="canvas" width="640" height="480" style={{border: '1px solid #000000'}}></canvas>
-                    </td>
-                    <td>
-                        <ul>
-                            <li>Read Control Mesh from Disk: <input type="file" id="text_mesh_disk" accept=".off,.obj" /></li>
-                            <li>Subdivided Mesh Statistics:</li>
-                            <ul>
-                                <li><span id="label_mesh_nv">0</span> Vertices</li>
-                                <li><span id="label_mesh_nf">0</span> Faces</li>
-                                <li><span id="label_mesh_ne">0</span> Edges</li>
-                            </ul>
-                                <li><button onClick={handleSubdivideClick}>Subdivide</button></li>
-                                <li><button onClick={handleWriteMeshClick}>Write Mesh</button></li>
-                                <li>Material: <img id="img_material" /></li>
-                            <ul>
-                                <li>Read from Disk: <input type="file" id="text_material_disk" accept=".png,.jpg,.gif" /></li>
-                            </ul>
-                                <li>Draw Options</li>
-                            <ul>
-                                <li><input type="checkbox" id="check_show_edges" defaultChecked onChange={handleCheckboxChange} />Show Edges</li>
-                                <li><input type="checkbox" id="check_show_control" defaultChecked onChange={handleCheckboxChange} />Show Control Mesh</li>
-                            </ul>
-                            <li>Camera Control</li>
-                            <ul>
-                                <li>Drag: Rotate</li>
-                                <li>Shift+Drag: Zoom</li>
-                                <li>Ctrl+Drag: Pan</li>
-                            </ul>
-                        </ul>
-                    </td>
-                </tr>
-            </tbody>
-        </table>
+    const handleTextureChange = useCallback((event) => {
+        if (event.target.files.length !== 1) return;
+        const file = event.target.files[0];
+        if (!verify_filename_extension(file.name, ['.png', '.jpg', '.gif'])) return;
+    
+        const reader = new FileReader();
+        reader.onload = function () {
+          read_texture(this.result);
+        };
+        reader.readAsDataURL(file);
+      }, []);
+
+    return (   
+        <div className='flex m-4 items-start'>
+            <canvas ref={canvasRef} id="canvas" className="m-4 rounded-lg" width="640" height="480" style={{border: '1px solid #000000'}}></canvas>
+            <div className="bg-white bg-opacity-30 backdrop-blur-md rounded-lg m-4 p-4 shadow-lg w-1/2">
+                <div className="flex flex-col mb-4" key="input_file">
+                    <div className="flex">
+                        Read Control Mesh from Disk: 
+                    </div>
+                    <label className={inputFileStyle}>
+                        <div className="flex">
+                            <input
+                                id="test_mesh_disk"
+                                name="test_mesh_disk"
+                                type="file"
+                                accept=".off,.obj"
+                                className="hidden"
+                                onChange={handleFileChange}
+                            />
+                        </div> Choose File 
+                    </label>
+                </div>
+                <div className="flex flex-col mb-4" key="data">
+                    <div className="flex">
+                        Subdivided Mesh Statistics: 
+                    </div>
+                    <div className="flex pl-4">
+                        <span id="label_mesh_nv" className="pr-2">0</span>{" Vertices"}
+                    </div>
+                    <div className="flex pl-4">
+                        <span id="label_mesh_nf" className="pr-2">0</span>{" Faces"}
+                    </div>
+                    <div className="flex pl-4">
+                        <span id="label_mesh_ne" className="pr-2">0</span>{" Edges"}
+                    </div>
+                </div>
+                <div className="flex flex-col mb-4" key="data">
+                    <button 
+                        onClick={handleSubdivideClick}
+                        className={buttonStyle}
+                    >Subdivide</button>
+                </div>
+                <div className="flex flex-col mb-4" key="data">
+                    <button 
+                        onClick={handleWriteMeshClick}
+                        className={buttonStyle}
+                    >Write Mesh</button>
+                </div>
+                <div className="flex flex-col mb-4" key="data">
+                    <div className="flex">
+                        Material: 
+                    </div>
+                    <div className="flex flex-col">
+                        <img id="img_material" className="w-1/4"/>
+                        <label className={`${inputFileStyle} my-2`}>
+                            <input
+                                id="test_material_disk"
+                                name="test_material_disk"
+                                type="file"
+                                accept=".png,.jpg,.gif"
+                                onChange={handleTextureChange}
+                                className="hidden"
+                            />Choose File
+                        </label>
+                    </div>
+                </div>
+                <div className="flex flex-col" key="data">
+                    <div className="flex">
+                        Draw Options: 
+                    </div>
+                    <div className="flex">
+                        <input
+                            id="check_show_edges"
+                            name="check_show_edges"
+                            type="checkbox"
+                            defaultChecked
+                            onChange={handleCheckboxChange}
+                            className="w-4 h-4 text-yellow-500 accent-yellow-500 bg-gray-100 border-gray-300 rounded focus:ring-yellow-500 dark:focus:ring-yellow-500 dark:ring-offset-gray-800 focus:ring-2 dark:bg-gray-700 dark:border-gray-600"
+                        />
+                        <label htmlFor="check_show_edges" className="ml-2 text-sm font-medium text-gray-900 dark:text-gray-300">
+                            Show Edge
+                        </label>
+                    </div>
+                    <div className="flex">
+                        <input
+                            id="check_show_control"
+                            name="check_show_control"
+                            type="checkbox"
+                            defaultChecked
+                            onChange={handleCheckboxChange}
+                            className="w-4 h-4 text-yellow-500 accent-yellow-500 bg-gray-100 border-gray-300 rounded focus:ring-yellow-500 dark:focus:ring-yellow-500 dark:ring-offset-gray-800 focus:ring-2 dark:bg-gray-700 dark:border-gray-600"
+                        />
+                        <label htmlFor="check_show_control" className="ml-2 text-sm font-medium text-gray-900 dark:text-gray-300">
+                            Show Control Mesh
+                        </label>
+                    </div>
+                </div>
+            </div>
+        </div>
     );
 };
 

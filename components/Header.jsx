@@ -12,7 +12,7 @@ const Header = ({subtitle}) => {
             </Link>
         </div>
         <div>
-        {subtitle}
+            {subtitle}
         </div>
     </div>
   );

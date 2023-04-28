@@ -50,7 +50,7 @@ const SplineForm = () => {
 
     return (
         <div className="bg-white bg-opacity-30 backdrop-blur-md rounded-lg m-4 p-4 shadow-lg w-1/2">
-            <div className="flex items-center mb-4" key="00">
+            <div className="flex items-center " key="00">
                 <input
                     id="numSteps"
                     name="numSteps"
@@ -66,7 +66,7 @@ const SplineForm = () => {
                 </label>
             </div>
             {formData.map((item,index) => (
-                <div className="flex items-center mb-4" key={index}>
+                <div className="flex items-center mt-4" key={index}>
                     <input
                         id={item.id}
                         name={item.id}
