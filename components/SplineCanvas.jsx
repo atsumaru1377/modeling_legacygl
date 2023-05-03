@@ -206,7 +206,7 @@ const SplineApp = () => {
 
         // delete
         if (mode == 1) {
-            emphasis_point([1,0,0],selected);
+            //emphasis_point([1,0,0],selected);
         }
         // n-th degree bezier
         if (formValues.nth) {
