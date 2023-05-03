@@ -21,13 +21,13 @@ const formData = [{
         label : "Draw Rational Bezier"
     },{
         id : "splineUniform",
-        label : "Draw CutMull Rom Spline with Uniform knots"
+        label : "Draw CatMull Rom Spline with Uniform knots"
     },{
         id : "splineChordal",
-        label : "Draw CutMull Rom Spline with Chordal knots"
+        label : "Draw CatMull Rom Spline with Chordal knots"
     },{
         id : "splineCentripetal",
-        label : "Draw CutMull Rom Spline with Centripetal knots"
+        label : "Draw CatMull Rom Spline with Centripetal knots"
     },{
         id : "yuksel",
         label : "Draw Yuksel Curve"
