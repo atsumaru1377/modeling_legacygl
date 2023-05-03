@@ -2,11 +2,13 @@ import Head from 'next/head'
 import Canvas from '../../components/SplineCanvas'
 import Header from '@/components/Header'
 import SplineForm from '@/components/SplineForm'
+import SplineLegends from '@/components/SplineLengends'
+import SplineReference from '@/components/SplineReference'
 
 export default function Home() {
   return (
     <>
-      <Header subtitle="spline"/>
+      <Header subtitle="Assignment-1 Spline (last-modified:2023-05-04)"/>
       <Head>
         <title>Bezier and Spline</title>
         <meta name="description" content="Assignment Modeling-1" />
@@ -17,6 +19,8 @@ export default function Home() {
         <Canvas/>
         <SplineForm/>
       </div>
+      <SplineLegends/>
+      <SplineReference/>
     </>
   )
 }

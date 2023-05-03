@@ -13,6 +13,7 @@ import glu from "@/lib/legacygl/glu";
 import { evalQuadraticBezier, evalGeneralBezier, rationalBezier, bezierAdjustSampling } from "@/lib/spline/bezier";
 import { cutmullRomSpline, bSpline } from "@/lib/spline/spline";
 import { yukselCurve } from "@/lib/spline/yuksel";
+import illustrator from "@/lib/spline/illustrator";
 import MyVec from "@/lib/spline/myVec";
 import MyMat from "@/lib/spline/myMat";
 
@@ -30,6 +31,11 @@ p3 = [-1, 0, 0];
 p4 = [-2, 1, 0];
 points = [p0, p1, p2, p3, p4];
 lines = [points];
+var new_line = [];
+var bezier_control_points = [[],[]];
+var refer_point = [];
+var refer_line = [];
+var mode = 2;
 
 const SplineApp = () => {
     applyCanvasExtensions();
@@ -43,11 +49,6 @@ const SplineApp = () => {
     var selected = null;
     var target = null;
     var num_steps;
-    var mode = 2;
-    var new_line = [];
-    var bezier_control_points = [[],[]];
-    var refer_point = [];
-    var refer_line = [];
     var refer_line_index = 0;
     var mouse_down = false;
     
@@ -169,6 +170,13 @@ const SplineApp = () => {
         }
         return picked_line;
     };
+
+    const emphasis_point = (point) => {
+        legacygl.point()
+        legacygl.begin(gl.LINE_STRIP);
+            legacygl.vertex2(point);
+        legacygl.end();
+    }
     
     function draw() {
         gl.clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT);
@@ -193,7 +201,12 @@ const SplineApp = () => {
         // pen tool
         if (mode == 3) {
             sample_draw([0,0,0], new_line);
-            sample_draw([0.8,0.4,1],yukselCurve(new_line,num_steps));
+            //sample_draw([0.8,0.4,1],yukselCurve(new_line,num_steps));
+        }
+
+        // delete
+        if (mode == 1) {
+            emphasis_point([1,0,0],selected);
         }
         // n-th degree bezier
         if (formValues.nth) {
@@ -210,6 +223,10 @@ const SplineApp = () => {
             samples[i] = [Math.sin(Math.PI/2*t),Math.cos(Math.PI/2*t)];
         }
         //sample_draw([1, 0.6, 0.2], samples);
+
+        if (formValues.illustrator) {
+            sample_draw([0,0,0], illustrator([[1,0],[0,1],[-1,0],[0,-1],[1,0]],[[[1,-0.552],[0.552,1],[-1,0.552],[-0.552,-1],[1,-0.552]],[[1,0.552],[-0.552,1],[-1,-0.552],[0.552,-1],[1,0.552]]],num_steps));
+        }
         
 
     
@@ -247,25 +264,17 @@ const SplineApp = () => {
         if (formValues.splineCentripetal) {
             sample_draw([1, 0.2, 1], cutmullRomSpline(lines[0], "centripetal", num_steps));
         }
-        
-        // b-spline
-        //if (formValues.bSpline")) {
-            //sample_draw([0.6, 0.2, 1], b([p0, p1, p2, p3, p4], 2, "openUniform", num_steps));
-        //}
-        
-        // circular
-        //if (formValues.circular")) {
-            //sample_draw([0.6, 0.2, 1], Circular.circular([p2,p3,p4], num_steps));
-        //}
-        
-        //sample_draw([0.6,0.2,1],yukselCurve(lines[0],num_steps));
-        //sample_draw([0,0,0],yuksel([p0,p1,p2,p3,p4,p0],num_steps));
+
+        // Yuksel Curve
+        if (formValues.yuksel) {
+            sample_draw([0.6,0.2,1], yukselCurve(lines[0], num_steps));
+        }
         
         // draw control points
         if (formValues.showControlPoints) {
             for (let i = 0; i < lines.length; i++) {
                 sample_draw([0.2, 0.5, 1], lines[i]);
-                sample_draw([0.6,0.2,1],yukselCurve(lines[i],num_steps));
+                //sample_draw([0.6,0.2,1],yukselCurve(lines[i],num_steps));
             }
         }
     }
@@ -419,10 +428,11 @@ const SplineApp = () => {
             case 3 :
                 if (evt.shiftKey) {
                     var new_control_point = make_point([],mouse_win);
-                    var last_curve_point = new_line[-1];
+                    var last_curve_point = new_line[new_line.length - 1];
                     bezier_control_points[0].push(MyVec.addmul(last_curve_point,2,new_control_point,-1));
                     bezier_control_points[1].push(new_control_point);
                 } else {
+                    var last_curve_point = new_line[new_line.length - 1];
                     bezier_control_points[0].push(last_curve_point);
                     bezier_control_points[1].push(last_curve_point);
                 }
@@ -459,10 +469,6 @@ const SplineApp = () => {
             draw();
         }
     }, [canvasRef, formValues]);
-
-    const handleFormChange = () => {
-        draw();
-    }
 
     return (
         <canvas ref={canvasRef} id="canvas" className="m-4 rounded-lg" width="640" height="480" style={{border: '1px solid #000000'}}></canvas>

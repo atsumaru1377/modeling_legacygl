@@ -9,7 +9,7 @@ const formData = [{
         label : "Show Sample Points"
     },{
         id : "quadratic",
-        label : "Draw Quadratic (3rd) Bezier"
+        label : "Draw Quadratic (2nd) Bezier"
     },{
         id : "nth",
         label : "Draw n-th Bezier"
@@ -31,9 +31,6 @@ const formData = [{
     },{
         id : "yuksel",
         label : "Draw Yuksel Curve"
-    },{
-        id : "illustrator",
-        label : "Draw Curve like Adobe Illustrator"
     }
 ];
 
