@@ -10,6 +10,7 @@
   },
   "dependencies": {
     "autoprefixer": "^10.4.14",
+    "clone": "^2.1.2",
     "eslint": "8.38.0",
     "eslint-config-next": "13.3.0",
     "gl-matrix": "^3.4.3",

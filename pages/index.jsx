@@ -26,6 +26,15 @@ export default function Home() {
               />
           </Link>
         </div>
+        <div className="w-full sm:w-1/2 md:w-1/3 lg:w-1/4  p-4">
+          <Link href="/animation1">
+            <Card
+              title="Animation 1"
+              content="Inverse Kinematics"
+              imgUrl="/spline.png"
+              />
+          </Link>
+        </div>
       </div>
     </div>
   );
