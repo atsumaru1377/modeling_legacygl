@@ -62,7 +62,7 @@ const SubdivisionApp = () => {
 
     function compute_ik(target_position) {
         // TODO: ここにCCD法を実装する
-        for (let interation = 0; interation < 1; interation++) {
+        for (let interation = 0; interation < 10; interation++) {
             for (let index = linkages_len - 2; index >= -1; index--) {
                 const end_effector = clone(linkages[linkages_len - 1]).position;
                 const current_node = (index != -1) ? clone(linkages[index].position) : [0,0];
