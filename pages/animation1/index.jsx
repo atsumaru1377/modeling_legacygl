@@ -6,10 +6,10 @@ import IKReference from '@/components/IKReference'
 export default function Home() {
   return (
     <>
-      <Header subtitle="Assignment-1 Spline (last-modified:2023-05-04)"/>
+      <Header subtitle="Assignment-1 IK (last-modified:2023-06-01)"/>
       <Head>
-        <title>Bezier and Spline</title>
-        <meta name="description" content="Assignment Modeling-1" />
+        <title>Inverse Kinematics</title>
+        <meta name="description" content="Assignment Animation-1" />
         <meta name="viewport" content="width=device-width, initial-scale=1" />
         <link rel="icon" href="/favicon.ico" />
       </Head>
