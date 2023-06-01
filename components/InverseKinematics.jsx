@@ -7,7 +7,7 @@ import { get_camera } from "@/lib/legacygl/camera";
 import { colormap } from "@/lib/legacygl/colormap";
 import { get_drawutil } from "@/lib/legacygl/drawutil";
 import { mat2,mat2d,mat3,mat4,quat,quat2,vec2,vec3,vec4 } from "@/lib/legacygl/gl-matrix-util";
-import glu from '@/lib/legacygl/glu'
+import glu from "@/lib/legacygl/glu"
 import { make_halfedge_mesh } from "@/lib/legacygl/halfedge";
 import { get_legacygl } from "@/lib/legacygl/legacygl";
 import { meshio } from "@/lib/legacygl/meshio";
@@ -233,13 +233,13 @@ const SubdivisionApp = () => {
         const { name, value, type, checked } = e.target;
         setFormValues((prevValues) => ({
             ...prevValues,
-            [name]: type === 'checkbox' ? checked : Number(value),
+            [name]: type === "checkbox" ? checked : Number(value),
         }));
     };
 
     return (
-        <div className='flex m-4 items-start'>
-            <canvas ref={canvasRef} id="canvas" className="m-4 rounded-lg" width="640" height="480" style={{border: '1px solid #000000'}}></canvas>
+        <div className="flex m-4 items-start">
+            <canvas ref={canvasRef} id="canvas" className="m-4 rounded-lg" width="640" height="480" style={{border: "1px solid #000000"}}></canvas>
             <div className="bg-white bg-opacity-30 backdrop-blur-md rounded-lg m-4 p-4 shadow-lg w-1/2">
                 <div className="flex flex-col mb-4">
                     <div className="flex">
@@ -257,7 +257,7 @@ const SubdivisionApp = () => {
                 </div>
                 <div className="flex flex-col mb-4">
                     <div className="flex">
-                        Selected Linkage's Angle::
+                        Selected Linkages Angle::
                     </div>
                     <div className="flex">
                         <input
