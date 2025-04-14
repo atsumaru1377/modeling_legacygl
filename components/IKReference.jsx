@@ -1,7 +1,6 @@
 import React from 'react';
 
 const referenceData = [
-    { label: 'GitHub', detail: 'https://github.com/atsumaru1377/modeling_legacygl' },
 ];
 
 const IKReference = () => {
