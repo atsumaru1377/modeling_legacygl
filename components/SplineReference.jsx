@@ -2,7 +2,6 @@ import React from 'react';
 
 const referenceData = [
     { label: 'Glitch', detail: 'https://assignment-m1.glitch.me/' },
-    { label: 'GitHub', detail: 'https://github.com/atsumaru1377/modeling_legacygl' },
 ];
 
 const SplineReference = () => {
